@@ -21,13 +21,16 @@ namespace NetduinoBot.Libraries
     private const int CurrMask = 0x2; //Mask for the current state in determining direction of rotation.
     private const int Invalid = 0x3; //XORing two states where both bits have changed.
 
-    public QuadratureEncoder(Cpu.Pin channelAPin, Cpu.Pin channelBPin, EncodingTypes encoding)
+    public QuadratureEncoder(EncodingTypes encoding)
     {
       Pulses = 0;
       Revolutions = 0;
 
       _encoding = encoding;
+    }
 
+    public QuadratureEncoder(Cpu.Pin channelAPin, Cpu.Pin channelBPin, EncodingTypes encoding) : this(encoding)
+    {
       _channelA = new InterruptPort(channelAPin, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
       _channelB = new InterruptPort(channelBPin, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
 
