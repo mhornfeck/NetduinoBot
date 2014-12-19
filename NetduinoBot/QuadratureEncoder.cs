@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading;
+using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 
-namespace Kenbot
+namespace NetduinoBot
 {
   public class QuadratureEncoder : IRotaryEncoder
   {
@@ -40,11 +41,23 @@ namespace Kenbot
       }
     }
 
-    void OnChannelInterrupt(uint port, uint state, DateTime time)
+    private void OnChannelInterrupt(uint port, uint state, DateTime time)
     {
-      var chanA = _channelA.Read() ? 1 : 0;
-      var chanB = _channelB.Read() ? 1 : 0;
+      try
+      {
+        var chanA = _channelA.Read() ? 1 : 0;
+        var chanB = _channelB.Read() ? 1 : 0;
 
+        ProcessReadings(chanA, chanB);
+      }
+      catch (Exception e)
+      {
+        Debug.Print(e.Message);
+      }
+    }
+
+    public void ProcessReadings(int chanA, int chanB)
+    {
       _currentState = (chanA << 1) | (chanB);
 
       if (_encoding == EncodingTypes.X2)

@@ -1,63 +1,66 @@
 ﻿using System;
 using System.Threading;
+using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.Netduino;
 
-namespace Kenbot
+namespace NetduinoBot
 {
   public static class Program
   {
-    static readonly OutputPort led = new OutputPort(Pins.ONBOARD_LED, false);
-    
+    private static readonly OutputPort _led = new OutputPort(Pins.ONBOARD_LED, false);
+    private static readonly PWM _wheelMotor = new PWM(PWMChannels.PWM_PIN_D5, 20, 0, false);
+    private static readonly OutputPort _wheelDirection = new OutputPort(Pins.GPIO_PIN_D4, true);
+    private static readonly InterruptPort _button = new InterruptPort(Pins.ONBOARD_SW1, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
+
+    private static readonly PIDController _wheelController = new PIDController(-0.715, 0.06, 0, 10667.0,
+      0, 1.0, 0, GetProcessVariable, GetSetPoint, SetOutputValue);
+
+    private static readonly QuadratureEncoder _wheelEncoder = new QuadratureEncoder(Pins.GPIO_PIN_D12, Cpu.Pin.GPIO_Pin13, EncodingTypes.X4);
+
+    private const double Rate = 0.1;
+
     public static void Main()
     {
-      var analog0 = new AnalogInput(Cpu.AnalogChannel.ANALOG_0);
-      var button = new InterruptPort(Pins.ONBOARD_SW1, false, Port.ResistorMode.Disabled, Port.InterruptMode.InterruptEdgeBoth);
-      button.OnInterrupt += button_OnInterrupt;
+      _button.OnInterrupt += button_OnInterrupt;
+      _wheelMotor.Start();
+      _wheelController.Enable();
 
-      var wheelSpeed = new PWM(PWMChannels.PWM_PIN_D5, 100, 1.0, false);
-      var wheelDirection = new OutputPort(Pins.GPIO_PIN_D4, true);
+      var timer = 0;
 
-      var counter = 0;
-
-      wheelSpeed.Start();
-
-      while (true)
+      while (timer < 10000)
       {
-        var input = analog0.Read();
-        led.Write(input < 0.2);
-
-        counter++;
-
-        if (counter % 100 == 0)
+        try
         {
-          ChangeMotorSpeed(counter, wheelSpeed);
+          Debug.Print("Time: " + timer + "ms. Pulses: " + _wheelEncoder.Pulses);
+          Thread.Sleep(100);
+          timer += 100;
         }
-
-        if (counter >= 2000)
+        catch (Exception)
         {
-          counter = 0;
+          break;
         }
-
-        Thread.Sleep(10);
       }
+
+      _wheelMotor.DutyCycle = 0;
+      _wheelController.Disable();
     }
 
-    static void ChangeMotorSpeed(int counter, PWM pwm)
+    private static double GetProcessVariable()
     {
-      var modifier = counter/100;
+      var pulses = _wheelEncoder.Pulses;
+      var velocity = (pulses / Rate);
+      return velocity;
+    }
 
-      if (modifier > 10)
-      {
-        modifier = 10 + (10 - modifier);
-      }
+    private static double GetSetPoint()
+    {
+      return 3000;
+    }
 
-      var dutyCycle = (10.0 + (10.0*modifier)) / 100.0;
-
-      if (dutyCycle >= 0.0 && dutyCycle <= 1.0)
-      {
-        pwm.DutyCycle = dutyCycle;
-      }
+    private static void SetOutputValue(double value)
+    {
+      _wheelMotor.DutyCycle = value;
     }
 
     static void button_OnInterrupt(uint data1, uint data2, DateTime time)
