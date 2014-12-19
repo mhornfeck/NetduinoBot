@@ -2,6 +2,7 @@
 using System.Threading;
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
+using NetduinoBot.Libraries;
 using SecretLabs.NETMF.Hardware.Netduino;
 
 namespace NetduinoBot
