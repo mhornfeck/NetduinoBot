@@ -92,6 +92,19 @@ namespace NetduinoBot.Libraries
 
     #region Construction / Deconstruction
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="pG">Proportional Constant</param>
+		/// <param name="iG">Integral Constant</param>
+		/// <param name="dG">Derivative Constant</param>
+		/// <param name="pMax">Maximum Value for the Process Variable</param>
+		/// <param name="pMin">Minimal Value for the Process Variable</param>
+		/// <param name="oMax">Maximum Value for the Output Variable</param>
+		/// <param name="oMin">Minimal Value for the Output Variable</param>
+		/// <param name="pvFunc">A function that returns the value of the process variable (thing being measured).</param>
+		/// <param name="spFunc">Returns the value of the set point (what we want the process variable to equal).</param>
+		/// <param name="outFunc">Tells the PID controller what to call to set the output value.</param>
     public PIDController(double pG, double iG, double dG,
         double pMax, double pMin, double oMax, double oMin,
         GetDouble pvFunc, GetDouble spFunc, SetDouble outFunc)
